@@ -3,7 +3,10 @@
 """Gradient clipping."""
 
 import torch
-from torch._six import inf
+try:
+    from torch._six import inf
+except:
+    from torch import inf
 
 from apex.multi_tensor_apply import multi_tensor_applier
 import amp_C
