@@ -29,6 +29,7 @@ def parse_args(extra_args_provider=None, ignore_unknown_args=False):
     parser = _add_logging_args(parser)
     parser = _add_inference_args(parser)
     parser = _add_transformer_engine_args(parser)
+    parser = _add_tools_args(parser)
 
     # Custom arguments.
     if extra_args_provider is not None:
@@ -1107,5 +1108,12 @@ def _add_vision_args(parser):
                        help='teacher temperature')
     group.add_argument('--dino-warmup-teacher-temp-epochs', type=int, default=30,
                        help='warmup teacher temperaure epochs')
+
+    return parser
+
+def _add_tools_args(parser):
+    group = parser.add_argument_group(title='arguments for tools')
+
+    group.add_argument('--enable_profiler', action='store_true', help='enable profiler')
 
     return parser

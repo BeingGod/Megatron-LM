@@ -675,6 +675,30 @@ def train(forward_step_func, model, optimizer, opt_param_scheduler,
     # Iterations.
     iteration = args.iteration
 
+    if args.enable_profiler:
+        activitie = [
+                torch.profiler.ProfilerActivity.CPU,
+                torch.profiler.ProfilerActivity.CUDA,
+            ]
+        schedul = torch.profiler.schedule(wait=0, warmup=0, active=1, repeat=1)
+
+        save_path = f'profiler/{model[0]._get_name()}'
+
+        import socket
+        current_rank = 0xFF
+        if torch.distributed.is_initialized():
+            current_rank = torch.distributed.get_rank()
+        worker_name = f"{socket.gethostname()}_{current_rank}"
+
+        p = torch.profiler.profile(
+            activities=activitie,
+            schedule=schedul,
+            record_shapes=True,
+            profile_memory=False,
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(save_path, worker_name=worker_name)
+        )
+        p.start()
+
     timers('interval-time', log_level=0).start(barrier=True)
     print_datetime('before the start of training step')
     report_memory_flag = True
@@ -757,6 +781,12 @@ def train(forward_step_func, model, optimizer, opt_param_scheduler,
             torch.distributed.barrier()
             print_datetime('exiting program at iteration {}'.format(iteration))
             sys.exit()
+        
+        if args.enable_profiler:
+            p.step()
+    
+    if args.enable_profiler:
+        p.stop()
 
 
     return iteration
